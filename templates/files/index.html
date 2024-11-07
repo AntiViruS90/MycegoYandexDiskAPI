@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Яндекс.Диск - Веб Приложение</title>
+    <script src="https://yastatic.net/s3/passport-sdk/autofill/v1/sdk-suggest-with-polyfills-latest.js"></script>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Введите публичную ссылку на папку Яндекс.Диск</h1>
+        <form action="/" method="post">
+            {% csrf_token %}
+            <label for="public_key">Публичная ссылка:</label>
+            <input type="text" id="public_key" name="public_key" required>
+            <button type="submit">Посмотреть файлы</button>
+        </form>
+    </div>
+    <script>
+        window.YaAuthSuggest.init(
+            {
+              client_id: "8aac1ab28de94334a3c82b76d63350b4",
+              response_type: "token",
+              redirect_uri: "https://oauth.yandex.ru/verification_code"
+            },
+            "https://oauth.yandex.ru",
+            { view: "default" }
+          )
+          .then(({handler}) => handler())
+          .then(data => console.log('Сообщение с токеном', data))
+          .catch(error => console.log('Обработка ошибки', error))
+    </script>
+</body>
+</html>
