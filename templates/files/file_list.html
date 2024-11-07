@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Файлы на Яндекс.Диск</title>
+        <link rel="stylesheet" href="{% static 'style.css' %}">
+    </head>
+    <body>
+        <div class="container">
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="public_key" value="{{ public_key }}">
+                <label for="media_type">Тип файла:</label>
+                <select name="media_type" id="media_type">
+                    <option value="">Все файлы</option>
+                    <option value="image">Изображения</option>
+                    <option value="document">Документы</option>
+                    <option value="video">Видео</option>
+                </select>
+                <button type="submit">Фильтровать</button>
+            </form>
+
+            <h1>Список файлов</h1>
+            <div>
+                {% for file in files %}
+                    <ul>
+                        <li>{{ file.name }}</li>
+                        <li>{{ file.media_type }}</li>
+                    </ul>
+                    <button>
+                        <a href="{% url 'download_file' public_key=public_key file_path=file.path|slice:"1:" %}">Скачать</a>
+                    </button>
+                {% endfor %}
+            </div>
+            <hr />
+            <div>
+                <form method="POST" onsubmit="downloadFiles(event)">
+                    {% csrf_token %}
+                    {% for file in files %}
+                        <span>
+                            <input type="checkbox" name="files" value="{{ file.path }}"> {{ file.name }}<br>
+                        </span>
+                    {% endfor %}
+                    <button type="submit">Скачать выбранные</button>
+                </form>
+            </div>
+
+
+            <a style="color: blue" href="/">Назад</a>
+        </div>
+
+        <script>
+            function downloadFiles(event) {
+                event.preventDefault(); // Предотвращаем стандартное поведение формы
+
+                const formData = new FormData();
+                const selectedFiles = document.querySelectorAll('input[name="files"]:checked');
+
+                // Добавляем выбранные файлы в FormData
+                selectedFiles.forEach(fileInput => {
+                    formData.append('files', fileInput.value);  // Добавляем каждый выбранный файл
+                });
+
+                if (selectedFiles.length === 0) {
+                    alert('Пожалуйста, выберите хотя бы один файл для скачивания.');
+                    return;  // Завершаем функцию, если ни один файл не выбран
+                }
+
+                const publicKey = "{{ public_key|urlencode }}";  // Кодируем public_key в URL-формате
+
+                // Отправляем запрос на сервер для создания и скачивания архива
+                fetch("{% url 'download_multiple_files' public_key=public_key %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                })
+                .then(response => response.blob())  // Получаем архив в виде blob
+                .then(blob => {
+                    // Создаем ссылку для скачивания и инициируем скачивание
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'files.zip';  // Имя файла архива
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error('Ошибка при скачивании файлов:', error);
+                });
+            }
+        </script>
+    </body>
+</html>

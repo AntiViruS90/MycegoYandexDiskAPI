@@ -1,0 +1,7 @@
+.idea/
+.pytest_cache/
+.venv/
+__pycache__/
+files/__pycache__/
+yandex_disk/__pycache__/
+db.sqlite3
